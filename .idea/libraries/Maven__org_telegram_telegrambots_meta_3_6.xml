@@ -1,5 +1,8 @@
 <component name="libraryTable">
   <library name="Maven: org.telegram:telegrambots-meta:3.6">
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$" />
+    </ANNOTATIONS>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/telegram/telegrambots-meta/3.6/telegrambots-meta-3.6.jar!/" />
     </CLASSES>

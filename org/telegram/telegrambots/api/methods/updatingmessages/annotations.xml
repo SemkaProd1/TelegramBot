@@ -1,0 +1,5 @@
+<root>
+    <item name='org.telegram.telegrambots.api.methods.updatingmessages.DeleteMessage'>
+        <annotation name='java.lang.Deprecated'/>
+    </item>
+</root>
