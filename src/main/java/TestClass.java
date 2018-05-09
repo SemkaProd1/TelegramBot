@@ -15,14 +15,10 @@ import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static java.lang.Math.incrementExact;
 import static java.lang.Math.toIntExact;
 
 public class TestClass extends TelegramLongPollingBot {
     private boolean must_save_msg_inf;
-    private boolean must_save_msg_text;
-    String root_text = null;
     private boolean home_tasting_processing;
     private String token = "575468488:AAHvi9kUv_2SDiH4tEwpfQP23_P_OgHwKa0";
     int root_fwdMsg_ID =0;
@@ -30,7 +26,7 @@ public class TestClass extends TelegramLongPollingBot {
     String autorName = null;
     String title = null;
     long root_CHAT_ID = 0;
-    String url = "https://api.telegram.org/bot575468488:AAHvi9kUv_2SDiH4tEwpfQP23_P_OgHwKa0/";
+    String url = "https://api.telegram.org/bot575468488:AAHvi9kUv_2SDiH4tEwpfQP23_P_OgHwKa0/getupdates";
 
 
     public static void main(String[] args) {
@@ -103,6 +99,30 @@ public class TestClass extends TelegramLongPollingBot {
 
         if (message.getText().equals("Домашнее задание")){
             markupHT(update);
+            SendMessage sendMessage=new SendMessage().setChatId(update.getMessage().getChatId()).setText("вот, смотри, работает");
+            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+            List<InlineKeyboardButton> rowInline = new ArrayList<>();
+            rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+            rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+            rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+            rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+            List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
+            rowInline2.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+            rowInline2.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+            List<InlineKeyboardButton> rowInline3 = new ArrayList<>();
+            rowInline3.add(new InlineKeyboardButton().setText("Максим!!!!!!!!!!!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+            rowsInline.add(rowInline);
+            rowsInline.add(rowInline2);
+            rowsInline.add(rowInline3);
+            markupInline.setKeyboard(rowsInline);
+            sendMessage.setReplyMarkup(markupInline);
+            try {
+                sendMessage(sendMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+
         }
         if (message.getText().equals("Назад")){
             markup(update);
@@ -195,7 +215,6 @@ public class TestClass extends TelegramLongPollingBot {
         rowInline.add(new InlineKeyboardButton().setText("Все домашние задания").setUrl("http://telegra.ph/").setCallbackData("ctho eto"));
         rowsInline.add(rowInline);
 
-        // Add it to the message
         markupInline.setKeyboard(rowsInline);
         message.setReplyMarkup(markupInline);
         try {
@@ -203,8 +222,6 @@ public class TestClass extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
-// Document doc = Jsoup.connect("http://telegra.ph/test-story-04-14").get();
-//        String title = doc.select(".tl_article_header h1").text();
 
     }
 
