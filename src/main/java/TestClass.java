@@ -1,4 +1,5 @@
 
+import org.json.JSONObject;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
@@ -11,8 +12,13 @@ import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboar
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
+import org.telegram.telegraph.api.methods.CreatePage;
+import org.telegram.telegraph.api.objects.Node;
+import org.telegram.telegraph.api.objects.NodeText;
+import org.telegram.telegraph.api.objects.Page;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import static java.lang.Math.toIntExact;
@@ -25,6 +31,7 @@ public class TestClass extends TelegramLongPollingBot {
     String userName = null;
     String autorName = null;
     String title = null;
+    String TLGRPH_TOKEN = null;
     long root_CHAT_ID = 0;
     String url = "https://api.telegram.org/bot575468488:AAHvi9kUv_2SDiH4tEwpfQP23_P_OgHwKa0/getupdates";
 
@@ -57,79 +64,105 @@ public class TestClass extends TelegramLongPollingBot {
 
         Message message = update.getMessage();
         if (home_tasting_processing){
-            if (userName != null && autorName != null && title == null){
-                title = saveText(update, autorName);
-                    homeTask(update);
+            if (userName != null && autorName != null){
+                authorization(update);
+            }
+            if (userName != null && autorName == null){
+                autorName = saveText(update, userName);
+                authorization(update);
+            }
+            if (userName == null) {
+                userName = saveText(update, "");
+                authorization(update);
             }
 
+
         }
-        if (message.getText().equals("/help")|| message.getText().equals("/help@" + getBotUsername())){
-            if(message.isSuperGroupMessage()) {
-                sendMsgToChat(update, "Привет, я робот");
+
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            if (message.getText().equals("/help") || message.getText().equals("/help@" + getBotUsername())) {
+                if (message.isSuperGroupMessage()) {
+                    sendMsgToChat(update, "Привет, я робот");
+                    markup(update);
+                } else {
+                    sendMsgToPrivate(update, "Привет, я робот");
+                }
+            }
+            if (message.getText().equals("/start")) {
                 markup(update);
-            }else{
-                sendMsgToPrivate(update, "Привет, я робот");
             }
-        }
-        if (message.getText().equals("/start")){
-            markup(update);
-        }
-        if (message.getText().equals("/condb")) {
-
-            String user_first_name = update.getMessage().getChat().getFirstName();
-            String user_last_name = update.getMessage().getChat().getLastName();
-            String user_username = update.getMessage().getChat().getUserName();
-            long user_id = update.getMessage().getChat().getId();
-
-            String message_text = update.getMessage().getText();
-            long chat_id = update.getMessage().getChatId();
-            SendMessage message1 = new SendMessage().setChatId(chat_id).setText(message_text);
-            try {
-                sendMessage(message1);
-                Browser.check(user_first_name, user_last_name, toIntExact(user_id), user_username);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (message.getText().equals("/saveMsg") || message.getText().equals("/saveMsg@" + getBotUsername())){
-            must_save_msg_inf = true;
-            sendMsgToPrivate(update, "Перешлите мне сообщение, которое нужно сохранить");
-        }
-
-        if (message.getText().equals("Домашнее задание")){
-            markupHT(update);
-            SendMessage sendMessage=new SendMessage().setChatId(update.getMessage().getChatId()).setText("вот, смотри, работает");
-            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-            List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-            List<InlineKeyboardButton> rowInline = new ArrayList<>();
-            rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
-            rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
-            rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
-            rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
-            List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
-            rowInline2.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
-            rowInline2.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
-            List<InlineKeyboardButton> rowInline3 = new ArrayList<>();
-            rowInline3.add(new InlineKeyboardButton().setText("Максим!!!!!!!!!!!").setCallbackData("JOIN_PREMIUM").setUrl(url));
-            rowsInline.add(rowInline);
-            rowsInline.add(rowInline2);
-            rowsInline.add(rowInline3);
-            markupInline.setKeyboard(rowsInline);
-            sendMessage.setReplyMarkup(markupInline);
-            try {
-                sendMessage(sendMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
+            if (message.getText().equals("ss")) {
+                authorization(update);
             }
 
+            if (update.hasMessage() && update.getMessage().hasText()) {
+                long chat_id = update.getMessage().getChatId();
+                if (message.getText().equals("Домашнее задание")) {
+                    SendMessage sendMessage = new SendMessage().setChatId(chat_id).setText("вот, смотри, работает");
+                    InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+                    List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+                    List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                    rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+                    rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+                    rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+                    rowInline.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+                    List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
+                    rowInline2.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+                    rowInline2.add(new InlineKeyboardButton().setText("Максим!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+                    List<InlineKeyboardButton> rowInline3 = new ArrayList<>();
+                    rowInline3.add(new InlineKeyboardButton().setText("Максим!!!!!!!!!!!").setCallbackData("JOIN_PREMIUM").setUrl(url));
+                    rowsInline.add(rowInline);
+                    rowsInline.add(rowInline2);
+                    rowsInline.add(rowInline3);
+                    markupInline.setKeyboard(rowsInline);
+                    sendMessage.setReplyMarkup(markupInline);
+                    try {
+                        execute(sendMessage); // Sending our message object to user
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            if (message.getText().equals("/saveMsg") || message.getText().equals("/saveMsg@" + getBotUsername())) {
+                must_save_msg_inf = true;
+                sendMsgToPrivate(update, "Перешлите мне сообщение, которое нужно сохранить");
+            }
+
+            if (message.getText().equals("Домашнее задание")) {
+                markupHT(update);
+
+
+            }
+            if (message.getText().equals("Назад")) {
+                markup(update);
+            }
         }
-        if (message.getText().equals("Назад")){
-            markup(update);
+        } else if (update.hasCallbackQuery()) {
+            // Set variables
+            String call_data = update.getCallbackQuery().getData();
+
+            long message_id = update.getCallbackQuery().getMessage().getMessageId();
+            long chat_id = update.getCallbackQuery().getMessage().getChatId();
+
+            if (call_data.equals("JOIN_PREMIUM")) {
+                System.out.println("haha");
+                sendMsgToPrivate(update, "haha");
+            }
+            if (call_data.equals("create_page")){
+
+//                ifNode contentNode= new NodeText("Спасибо ");
+//                List<Node> content = new ArrayList<>();
+//                content.add(contentNode);
+//
+//                Page page = new CreatePage(TLGRPH_TOKEN, "My title", content)
+//                        .setAuthorName("Random author")
+//                        .setReturnContent(true)
+//                        .execute();
+            }
         }
-        if (message.getText().equals("Добавить домашнее задание")){
-                homeTask(update);
-        }
+//        if (message.getText().equals("Добавить домашнее задание")){
+//                homeTask(update);
+//        }
 
         if (must_save_msg_inf) {
             if (!message.isCommand()) {
@@ -144,31 +177,51 @@ public class TestClass extends TelegramLongPollingBot {
         if (root_text.equals(lastMsg)){
             return null;
         }
-        System.out.println(root_text);
         return root_text;
     }
-    private void homeTask(Update update) {
+    private void authorization(Update update) {
         home_tasting_processing = true;
         if (userName == null) {
             sendMsgToPrivate(update, "Введите userName");
         }
-
-        if (userName != null && autorName != null && title !=null) {
-            sendMsgToPrivate(update, "Отлично!");
-
-
-
-            SendMessage message = new SendMessage().setChatId(update.getMessage().getChatId()).setText(""); // Create a message object object
-
+        if (userName != null && autorName == null) {
+            sendMsgToPrivate(update, "Введите autorName");
+        }
+        if (userName != null && autorName != null) {
+            SendMessage message = new SendMessage().setChatId(update.getMessage().getChatId()).setText("Отлично! Аккаунт создан. Вот ваша ссылка для авторизации этого аккаунта"); // Create a message object object
+            JSONObject json = null;
+            String url2 = "https://api.telegra.ph/createAccount?short_name=" + userName + "&author_name=" + autorName;
+            System.out.println(url2);
+            try {
+                json = JsonReader.readJsonFromUrl(url2);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            JSONObject result = (JSONObject) json.opt("result");
+            TLGRPH_TOKEN = (String) result.get("access_token");
+            System.out.println(TLGRPH_TOKEN);
+            String TLGRPH_CONFIM_URL = (String) result.get("auth_url");
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-            List<InlineKeyboardButton> rowInline = new ArrayList<>();
-            rowInline.add(new InlineKeyboardButton().setText(title).setCallbackData("chto eto"));
-            rowsInline.add(rowInline);
-
-            // Add it to the message
+            List<InlineKeyboardButton> rowline = new ArrayList<>();
+            List<InlineKeyboardButton> rowline2 = new ArrayList<>();
+            rowline.add(new InlineKeyboardButton().setText("Войти как " + userName).setUrl(TLGRPH_CONFIM_URL).setCallbackData("mm"));
+            rowline2.add(new InlineKeyboardButton().setText("создать страницу").setCallbackData("create_page"));
+            String url3 = "https://api.telegra.ph/getAccountInfo?access_token=" + TLGRPH_TOKEN +"&fields=[\"auth_url\"]";
+            System.out.println(url3);
+            try {
+                json = JsonReader.readJsonFromUrl(url3);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            JSONObject result2 = (JSONObject) json.opt("result");
+            String NEW_URL = (String) result2.get("auth_url");
+            rowline2.add(new InlineKeyboardButton().setText("Войти с другого устройства").setUrl(NEW_URL).setCallbackData("all_pages"));
+            rowsInline.add(rowline);
+            rowsInline.add(rowline2);
             markupInline.setKeyboard(rowsInline);
             message.setReplyMarkup(markupInline);
+            home_tasting_processing = false;
             try {
                 execute(message);
             } catch (TelegramApiException e) {
@@ -176,7 +229,6 @@ public class TestClass extends TelegramLongPollingBot {
             }
         }
     }
-
         private void markup(Update update) {
         SendMessage message = new SendMessage().setChatId(update.getMessage().getChatId()).setText("keyboard"); // Create a message object object
 
@@ -201,29 +253,7 @@ public class TestClass extends TelegramLongPollingBot {
     }
 
 
-    private void hometask (Update update) {
-        home_tasting_processing = true;
-        if (userName == null) {
-            sendMsgToPrivate(update, "Введите userName");
-        }
-        SendMessage message = new SendMessage().setChatId(update.getMessage().getChatId()).setText("Вы можете создать новое домашнее задание или управлять старыми"); // Create a message object object
 
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-        rowInline.add(new InlineKeyboardButton().setText("Создать новое домашнее задание").setCallbackData("chto eto"));
-        rowInline.add(new InlineKeyboardButton().setText("Все домашние задания").setUrl("http://telegra.ph/").setCallbackData("ctho eto"));
-        rowsInline.add(rowInline);
-
-        markupInline.setKeyboard(rowsInline);
-        message.setReplyMarkup(markupInline);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-
-    }
 
     private void markupHT(Update update) {
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
@@ -277,15 +307,17 @@ public class TestClass extends TelegramLongPollingBot {
     }
 
     private void sendMsgToPrivate(Update update, String text) {
-
-        Message message = update.getMessage();
+        int id = 0;
         SendMessage sendMessage = new SendMessage();
+        if(update.hasCallbackQuery()){
+            id = update.getCallbackQuery().getFrom().getId();
+        }
+        else if (update.getMessage().hasText()){
+            id = update.getMessage().getFrom().getId();
+        }
         sendMessage.enableMarkdown(true)
                     .setText(text)
-                    .setChatId(String.valueOf((message.getFrom().getId())));
-        if (message.isCommand()){
-            sendMessage.setReplyToMessageId(message.getMessageId());
-        }
+                    .setChatId(String.valueOf((id)));
         try {
             sendMessage(sendMessage);
         } catch (TelegramApiException e) {
@@ -299,25 +331,6 @@ public class TestClass extends TelegramLongPollingBot {
                 .setMessageId(toIntExact(message));
         try {
             execute(new_message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-    private void homeTask2(Update update) {
-        SendMessage message1 = new SendMessage().setChatId(update.getMessage().getChatId()).setText("Создайте аккаунт! можно будет иметь несколько.");
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-        String userName = update.getMessage().getFrom().getUserName();
-        rowInline.add(new InlineKeyboardButton().setText("Создать аккаунт").setUrl("https://api.telegra.ph/createAccount?short_name=" +userName + "&author_name=" + userName).setCallbackData("chto eto"));
-
-        rowsInline.add(rowInline);
-
-
-        markupInline.setKeyboard(rowsInline);
-        message1.setReplyMarkup(markupInline);
-        try {
-            execute(message1);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
