@@ -1,7 +1,10 @@
 
+import database.DatabaseConnector;
+import database.UserEntity;
 import org.json.JSONObject;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
+import org.telegram.telegrambots.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.api.objects.Message;
@@ -12,28 +15,21 @@ import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboar
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
-import org.telegram.telegraph.api.methods.CreatePage;
-import org.telegram.telegraph.api.objects.Node;
-import org.telegram.telegraph.api.objects.NodeText;
-import org.telegram.telegraph.api.objects.Page;
 
 
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import static java.lang.Math.toIntExact;
 
 public class TestClass extends TelegramLongPollingBot {
-    private boolean must_save_msg_inf;
     private boolean home_tasting_processing;
-    private String token = "575468488:AAHvi9kUv_2SDiH4tEwpfQP23_P_OgHwKa0";
-    int root_fwdMsg_ID =0;
-    String userName = null;
-    String autorName = null;
-    String title = null;
-    String TLGRPH_TOKEN = null;
-    long root_CHAT_ID = 0;
-    String url = "https://api.telegram.org/bot575468488:AAHvi9kUv_2SDiH4tEwpfQP23_P_OgHwKa0/getupdates";
+    private final String token = "575468488:AAHvi9kUv_2SDiH4tEwpfQP23_P_OgHwKa0";
+    private String url = "https://api.telegram.org/bot575468488:AAHvi9kUv_2SDiH4tEwpfQP23_P_OgHwKa0/getupdates";
+    private UserEntity user = new UserEntity();
+    private DatabaseConnector databaseConnector = new DatabaseConnector();
 
 
     public static void main(String[] args) {
@@ -64,16 +60,16 @@ public class TestClass extends TelegramLongPollingBot {
 
         Message message = update.getMessage();
         if (home_tasting_processing){
-            if (userName != null && autorName != null){
-                authorization(update);
+            if (user.getUserName() != null && user.getAuthorName() != null){
+                account(update);
             }
-            if (userName != null && autorName == null){
-                autorName = saveText(update, userName);
-                authorization(update);
+            else if (user.getUserName() != null && user.getAuthorName() == null){
+                user.setAuthorName(saveText(update, user.getUserName()));
+                account(update);
             }
-            if (userName == null) {
-                userName = saveText(update, "");
-                authorization(update);
+            else if (user.getUserName() == null) {
+                user.setUserName(saveText(update, ""));
+                account(update);
             }
 
 
@@ -82,17 +78,20 @@ public class TestClass extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             if (message.getText().equals("/help") || message.getText().equals("/help@" + getBotUsername())) {
                 if (message.isSuperGroupMessage()) {
-                    sendMsgToChat(update, "Привет, я робот");
+
+
+                    sendMsgToChat(update, "sad");
+
                     markup(update);
                 } else {
-                    sendMsgToPrivate(update, "Привет, я робот");
+                   sendMsgToPrivate(update, "sad");
                 }
             }
             if (message.getText().equals("/start")) {
                 markup(update);
             }
             if (message.getText().equals("ss")) {
-                authorization(update);
+                account(update);
             }
 
             if (update.hasMessage() && update.getMessage().hasText()) {
@@ -123,11 +122,6 @@ public class TestClass extends TelegramLongPollingBot {
                     }
                 }
 
-            if (message.getText().equals("/saveMsg") || message.getText().equals("/saveMsg@" + getBotUsername())) {
-                must_save_msg_inf = true;
-                sendMsgToPrivate(update, "Перешлите мне сообщение, которое нужно сохранить");
-            }
-
             if (message.getText().equals("Домашнее задание")) {
                 markupHT(update);
 
@@ -148,7 +142,20 @@ public class TestClass extends TelegramLongPollingBot {
                 System.out.println("haha");
                 sendMsgToPrivate(update, "haha");
             }
-            if (call_data.equals("create_page")){
+            if (call_data.equals("authorization")) {
+                user.setUserName((String) databaseConnector.getStateByTelegramName("username", update.getCallbackQuery().getFrom().getUserName()));
+                AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
+                answerCallbackQuery.setUrl(authorization((String) databaseConnector.getStateByUserName(user.getUserName(), "token")));
+                answerCallbackQuery.setCallbackQueryId(update.getCallbackQuery().getId());
+                answerCallbackQuery.setText("sa?");
+                try {
+                    execute(answerCallbackQuery);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
 
 //                ifNode contentNode= new NodeText("Спасибо ");
 //                List<Node> content = new ArrayList<>();
@@ -158,17 +165,10 @@ public class TestClass extends TelegramLongPollingBot {
 //                        .setAuthorName("Random author")
 //                        .setReturnContent(true)
 //                        .execute();
-            }
-        }
+
 //        if (message.getText().equals("Добавить домашнее задание")){
 //                homeTask(update);
 //        }
-
-        if (must_save_msg_inf) {
-            if (!message.isCommand()) {
-                saveMsg(update);
-            }
-        }
     }
 
 
@@ -179,49 +179,43 @@ public class TestClass extends TelegramLongPollingBot {
         }
         return root_text;
     }
-    private void authorization(Update update) {
+    private void account(Update update) {
         home_tasting_processing = true;
-        if (userName == null) {
+        if (user.getUserName() == null) {
             sendMsgToPrivate(update, "Введите userName");
+
         }
-        if (userName != null && autorName == null) {
+        else if (user.getUserName() != null && user.getAuthorName() == null) {
             sendMsgToPrivate(update, "Введите autorName");
         }
-        if (userName != null && autorName != null) {
+        else if (user.getUserName() != null && user.getAuthorName() != null) {
+            user.setTelegramName(update.getMessage().getFrom().getUserName());
             SendMessage message = new SendMessage().setChatId(update.getMessage().getChatId()).setText("Отлично! Аккаунт создан. Вот ваша ссылка для авторизации этого аккаунта"); // Create a message object object
             JSONObject json = null;
-            String url2 = "https://api.telegra.ph/createAccount?short_name=" + userName + "&author_name=" + autorName;
+            String url2 = "https://api.telegra.ph/createAccount?short_name=" + user.getUserName() + "&author_name=" + user.getAuthorName();
             System.out.println(url2);
             try {
                 json = JsonReader.readJsonFromUrl(url2);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            assert json != null;
             JSONObject result = (JSONObject) json.opt("result");
-            TLGRPH_TOKEN = (String) result.get("access_token");
-            System.out.println(TLGRPH_TOKEN);
-            String TLGRPH_CONFIM_URL = (String) result.get("auth_url");
+            user.setToken((String) result.get("access_token"));
+            user.setisAdmin(true);
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
             List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
             List<InlineKeyboardButton> rowline = new ArrayList<>();
             List<InlineKeyboardButton> rowline2 = new ArrayList<>();
-            rowline.add(new InlineKeyboardButton().setText("Войти как " + userName).setUrl(TLGRPH_CONFIM_URL).setCallbackData("mm"));
+            rowline.add(new InlineKeyboardButton().setText("Войти как " + user.getUserName()).setCallbackData("authorization"));
             rowline2.add(new InlineKeyboardButton().setText("создать страницу").setCallbackData("create_page"));
-            String url3 = "https://api.telegra.ph/getAccountInfo?access_token=" + TLGRPH_TOKEN +"&fields=[\"auth_url\"]";
-            System.out.println(url3);
-            try {
-                json = JsonReader.readJsonFromUrl(url3);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            JSONObject result2 = (JSONObject) json.opt("result");
-            String NEW_URL = (String) result2.get("auth_url");
-            rowline2.add(new InlineKeyboardButton().setText("Войти с другого устройства").setUrl(NEW_URL).setCallbackData("all_pages"));
+            databaseConnector.insertUser(user);
             rowsInline.add(rowline);
             rowsInline.add(rowline2);
             markupInline.setKeyboard(rowsInline);
             message.setReplyMarkup(markupInline);
             home_tasting_processing = false;
+            user.reset();
             try {
                 execute(message);
             } catch (TelegramApiException e) {
@@ -277,15 +271,6 @@ public class TestClass extends TelegramLongPollingBot {
         }
     }
 
-    private void saveMsg(Update update ) {
-        Message command_test = update.getMessage();
-        if (!command_test.isCommand() && must_save_msg_inf) {
-            command_test = update.getMessage();
-            root_fwdMsg_ID = command_test.getMessageId();
-            root_CHAT_ID = command_test.getChatId();
-            must_save_msg_inf = false;
-        }
-    }
 
 
     private void sendMsgToChat(Update update, String text) {
@@ -323,8 +308,20 @@ public class TestClass extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
-
     }
+
+    private String  authorization(String token){
+        JSONObject json = null;
+        try {
+            json = JsonReader.readJsonFromUrl("https://api.telegra.ph/getAccountInfo?access_token=" + token +"&fields=[\"auth_url\"]");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        assert json != null;
+        JSONObject result2 = (JSONObject) json.opt("result");
+        return (String) result2.get("auth_url");
+    }
+
     private void deleteMsg(long chat, long message){
         DeleteMessage new_message = new DeleteMessage()
                 .setChatId(String.valueOf(chat))
