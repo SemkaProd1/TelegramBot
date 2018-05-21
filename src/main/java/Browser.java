@@ -1,4 +1,5 @@
-import org.json.JSONObject;
+import database.DatabaseConnector;
+import database.User;
 import org.telegram.telegraph.ExecutorOptions;
 import org.telegram.telegraph.TelegraphContext;
 import org.telegram.telegraph.TelegraphContextInitializer;
@@ -6,7 +7,7 @@ import org.telegram.telegraph.TelegraphLogger;
 import org.telegram.telegraph.api.methods.*;
 import org.telegram.telegraph.api.objects.*;
 import org.telegram.telegraph.exceptions.TelegraphException;
-import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -77,7 +78,7 @@ public class Browser {
         } catch (TelegraphException e) {
             TelegraphLogger.severe("MAIN", e);
         }
-    }
 
+    }
 
 }
