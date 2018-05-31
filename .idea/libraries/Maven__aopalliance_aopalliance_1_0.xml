@@ -8,7 +8,6 @@
     </JAVADOC>
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/aopalliance/aopalliance/1.0/aopalliance-1.0-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libraries/telegramBotUtilities-master.zip!/telegramBotUtilities-master/src" />
     </SOURCES>
   </library>
 </component>

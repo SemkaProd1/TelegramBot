@@ -11,14 +11,13 @@ public class Main {
     static {
         ApiContextInitializer.init();
         TelegraphContextInitializer.init();
+        TelegraphContext.registerInstance(ExecutorOptions.class, new ExecutorOptions());
     }
     public static void main(String[] args) {
-
-        TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-        TelegraphContext.registerInstance(ExecutorOptions.class, new ExecutorOptions());
         System.out.println("Telegraph: started");
         try {
-            telegramBotsApi.registerBot(new TelBot());
+            TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
+            telegramBotsApi.registerBot(new TelegramBot());
             System.out.println("Bot: started");
         } catch (TelegramApiException e) {
             e.printStackTrace();

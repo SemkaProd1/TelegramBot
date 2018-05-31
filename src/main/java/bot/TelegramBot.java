@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class TelBot extends TelegramLongPollingBot {
+public class TelegramBot extends TelegramLongPollingBot {
 
 
     private boolean pinned_message_processing;
@@ -40,12 +40,12 @@ public class TelBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "educationChat_bot";
+        return "educator_bot";
     }
 
     @Override
     public String getBotToken() {
-        return "575468488:AAGgDHPsl_uLiscyLT6313YmqGU7Z6hT8d8";
+        return "614209030:AAHaFWGE96VepGqVVvDXpyYkrzwqxLAqRzo";
 
     }
 
@@ -84,13 +84,18 @@ public class TelBot extends TelegramLongPollingBot {
             }
             if ((message.getText()).equals("/start " + utilities.regex(message.getText()))) {
 
-                markup(update, "Поздравляю! Вы подключены к пользователю " + databaseConnector.getParamByUserId(Integer.parseInt(utilities.regex(message.getText())), "userName").toString());
+                markup(update, "Поздравляю! Вы подключены к пользователю " + databaseConnector.getParamByUserId(Integer.parseInt(utilities.
+                        regex(message.getText())), "userName").toString() +"\n\n" + "K сожалению, наш бот может работать только если у " +
+                        "вас заполнено поле username в Telegram. Сейчас ваш юзернейм "+ update.getMessage().getFrom().getUserName()+
+                        "'\n\nЕсли он 'null', пожалуйста, задайте его в настройках прямо сейчас!");
                 sub_markup(update);
                 subber(update, Integer.parseInt(utilities.regex(message.getText())));
             }
             if (message.getText().equals("/start")) {
                 markup(update, "Привет! Если вы не преподаватель, попросите его о уникальной ссылке. \n" +
-                        "Для того, чтобы начать пользоваться бобом, пожалуйста, настройте максимально свой аккаут");
+                        "Для того, чтобы начать пользоваться ботом, пожалуйста, настройте максимально свой аккаунт!"+"\n\n" + "K сожалению, наш бот " +
+                        "может работать только если у вас заполнено поле username в Telegram. Сейчас ваш юзернейм = '"+ update.getMessage()
+                        .getFrom().getUserName()+ "'\n\nЕсли он 'null', пожалуйста, задайте его в настройках прямо сейчас!");
             }
             if (message.getText().equals("Сохраненные сообщения")) {
 
@@ -101,8 +106,11 @@ public class TelBot extends TelegramLongPollingBot {
             if (message.getText().equals("Домашние задания")) {
                 homeTask(update);
             }
-            if (message.getText().equals("Назад")) {
-                markup(update, "Это главное меню");
+            if (message.getText().equals("Информация о группе")) {
+                info(update);
+            }
+            if (message.getText().equals("Информация о преподавателе")) {
+                info(update);
             }
 
             if (message.getText().equals("Настройки аккаунта")) {
@@ -153,7 +161,6 @@ public class TelBot extends TelegramLongPollingBot {
                 } catch (TelegraphException e) {
                     e.printStackTrace();
                 }
-                System.out.println(pageList);
             }
             if (call_data.equals("info")) {
                 EditMessageText new_message = new EditMessageText()
@@ -166,7 +173,7 @@ public class TelBot extends TelegramLongPollingBot {
                 List<InlineKeyboardButton> phoneP = new ArrayList<>();
                 List<InlineKeyboardButton> mailPro = new ArrayList<>();
                 List<InlineKeyboardButton> newEnt = new ArrayList<>();
-                namePr.add(new InlineKeyboardButton().setText(" Добавить Имя преподавателя ").setCallbackData("low"));
+                namePr.add(new InlineKeyboardButton().setText("Добавить ФИО").setCallbackData("low"));
                 phoneP.add(new InlineKeyboardButton().setText("Добавить Телефон преподавателя").setCallbackData("low"));
                 mailPro.add(new InlineKeyboardButton().setText("Почта или что удобно").setCallbackData("low"));
                 newEnt.add(new InlineKeyboardButton().setText("Новый преподаватель/Организация").setCallbackData("low"));
@@ -202,6 +209,33 @@ public class TelBot extends TelegramLongPollingBot {
         }
     }
 
+    private void info(Update update) {
+        user = databaseConnector.getUserByUserName(update.getMessage().getFrom().getUserName());
+        SendMessage sendMessage = new SendMessage();
+        if (user.getisAdmin()) {
+            if ((utilities.getInfo(user.getUserName())).isEmpty()) {
+                sendMessage.setText("К сожалению, ваши ученики пока не присоединились к боту");
+            } else {
+                sendMessage.setText("Ваши ученики, что подключились к боту: \n" + utilities.getInfo(user.getUserName()));
+            }
+            sendMessage.setChatId(String.valueOf(user.getUserId())).enableHtml(true);
+            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+            List<InlineKeyboardButton> refUrl = new ArrayList<>();
+            refUrl.add(new InlineKeyboardButton().setText("Отправить реферальную ссылку").setSwitchInlineQuery("rf"));
+            rowsInline.add(refUrl);
+            markupInline.setKeyboard(rowsInline);
+            sendMessage.setReplyMarkup(markupInline);
+            try {
+                sendMessage(sendMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        } else {
+            //сюда
+        }
+    }
+
     private void savePin(Update update) {
         pinned_message_processing = false;
         pinned.setFromChatId(update.getMessage().getFrom().getId());
@@ -210,7 +244,6 @@ public class TelBot extends TelegramLongPollingBot {
         pinned.setTextMessage(update.getMessage().getText());
         try {
             pinned.setForwardFrom(update.getMessage().getForwardFromChat().getTitle());
-            System.out.println(pinned.getForwardFrom());
         } catch (Exception e) {
             pinned.setForwardFrom(update.getMessage().getForwardFrom().getUserName() + " (" + update.getMessage().getForwardFrom().getFirstName() + " " + update.getMessage().getForwardFrom().getLastName() + ")");
         }
@@ -223,17 +256,23 @@ public class TelBot extends TelegramLongPollingBot {
 
     private void handleIncomingInlineQuery(InlineQuery inlineQuery) {
         String query = inlineQuery.getQuery().trim().toLowerCase();
-        InlineContainer inlineContainer = new InlineContainer();
         if (query.equals("ht".trim().toLowerCase())) {
             try {
-                answerInlineQuery(inlineContainer.converteResultsToResponse(inlineQuery, inlineQuery.getFrom().getUserName(), "ht"));
+                answerInlineQuery(utilities.converteResultsToResponse(inlineQuery, inlineQuery.getFrom().getUserName(), "ht"));
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
         }
         if (query.equals("pm".trim().toLowerCase())) {
             try {
-                answerInlineQuery(inlineContainer.converteResultsToResponse(inlineQuery, inlineQuery.getFrom().getUserName(), "pm"));
+                answerInlineQuery(utilities.converteResultsToResponse(inlineQuery, inlineQuery.getFrom().getUserName(), "pm"));
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        }
+        if (query.equals("rf".trim().toLowerCase())) {
+            try {
+                answerInlineQuery(utilities.converteResultsToResponse(inlineQuery, String.valueOf(inlineQuery.getFrom().getId()), "rf"));
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
@@ -272,13 +311,13 @@ public class TelBot extends TelegramLongPollingBot {
         List<KeyboardRow> keyboard = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
         row.add("Домашние задания");
-        row.add("Мероприятия / заметки");
+        row.add("Сохраненные сообщения");
         keyboard.add(row);
         row = new KeyboardRow();
-        row.add("Сохраненные сообщения");
         row.add("Информация о преподавателе");
         keyboard.add(row);
         keyboardMarkup.setKeyboard(keyboard);
+        keyboardMarkup.setResizeKeyboard(true);
         message.setReplyMarkup(keyboardMarkup);
         try {
             sendMessage(message);
@@ -406,7 +445,6 @@ public class TelBot extends TelegramLongPollingBot {
             create_account_processing = false;
             try {
                 sendMessage(message);
-                System.out.println(user);
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
@@ -429,6 +467,7 @@ public class TelBot extends TelegramLongPollingBot {
         row.add("Сохраненные сообщения");
         row.add("Информация о группе");
         keyboard.add(row);
+        keyboardMarkup.setResizeKeyboard(true);
         keyboardMarkup.setKeyboard(keyboard);
         message.setReplyMarkup(keyboardMarkup);
         try {

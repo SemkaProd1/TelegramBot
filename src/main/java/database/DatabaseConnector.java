@@ -58,6 +58,13 @@ public class DatabaseConnector {
 
         return (query.uniqueResult() != null);
     }
+    public List exists(String username) {
+        Query query = getSessionFactory().openSession().
+                createQuery("select userName from database.User where  authorName= :authorN");
+        query.setString("authorN", username);
+
+        return query.list();
+    }
     public String ifExist(int userId){
 
         Query query = getSessionFactory().openSession().
