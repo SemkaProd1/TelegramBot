@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="database.Pinned" table="pinned" catalog="telegram_bot">
+        <id name="id" type="java.lang.Integer">
+            <column name="id" />
+            <generator class="identity" />
+        </id>
+        <property name="userName" type="string">
+            <column name="USERNAME" length="30" not-null="true"/>
+        </property>
+        <property name="forwardFrom" type="string">
+        <column name="forwardFrom" length="30"/>
+    </property>
+        <property name="fromChatId" type="java.lang.Integer">
+            <column name="fromChatId" length="11"/>
+        </property>
+        <property name="messageId" type="java.lang.Integer">
+            <column name="messageId" not-null="true" length="11"/>
+        </property><property name="textMessage" type="string">
+        <column name="textMessage" not-null="true" length="1224"/>
+    </property>
+    </class>
+</hibernate-mapping>
