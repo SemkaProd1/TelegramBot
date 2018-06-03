@@ -31,7 +31,7 @@ public class Pinned {
     private
     String textMessage;
 
-    public Pinned(int id, String userName, int fromChatId, String forwardFrom, int messageId, String textMessage) {
+    public Pinned(int id, String userName, int messageId, String textMessage,  int fromChatId, String forwardFrom) {
         this.id = id;
         this.userName = userName;
         this.fromChatId = fromChatId;

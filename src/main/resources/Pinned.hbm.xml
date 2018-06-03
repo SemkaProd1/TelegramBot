@@ -12,7 +12,7 @@
             <column name="USERNAME" length="30" not-null="true"/>
         </property>
         <property name="forwardFrom" type="string">
-        <column name="forwardFrom" length="30"/>
+        <column name="forwardFrom" length="55"/>
     </property>
         <property name="fromChatId" type="java.lang.Integer">
             <column name="fromChatId" length="11"/>

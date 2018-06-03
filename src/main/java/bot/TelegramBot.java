@@ -36,7 +36,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private Utilities utilities = new Utilities();
     private Pinned pinned = new Pinned();
     private DatabaseConnector databaseConnector = new DatabaseConnector();
-
+    private String CONSTANT_INFO = "<b>Информация о вашем преподавателе:</b>\n\n<b>ФИО:</b> <a href='tg://user?id=276028800'>Александ Александрович Алексанров</a> \n" +
+            "<b>Телефон:</b> +380678701190\n" + "<b>Почта:</b> semkaprod@gmail.com\n<b>Расписание занятий:</b> Вторник, Четверг: 16:00, Суббота: 11:00\n";
+    private String CONSTANT_HELP ="Это меню помощи. тут будет подробное описание всех методов, что где почему, благодаря чему. Чем больше ты знаешь о боте, тем лучше его исплользуешь!";
 
     @Override
     public String getBotUsername() {
@@ -45,7 +47,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotToken() {
-        return "***";
+        return "614209030:AAHaFWGE96VepGqVVvDXpyYkrzwqxLAqRzo";
 
     }
 
@@ -53,56 +55,63 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
 
         Message message = update.getMessage();
-
-        if (create_account_processing) {
-            if (user.getAuthorName() != null) {
-                createAccount(update);
-            } else if (user.getAuthorName() == null) {
-                user.setUserName(update.getMessage().getFrom().getUserName());
-                user.setAuthorName(saveText(update, user.getUserName()));
-                createAccount(update);
-            }
-        }
-        if (pinned_message_processing) {
-            if (pinned.getMessageId() == 0) {
-                savePin(update);
-            }
-
-        }
         if (update.hasInlineQuery()) {
             handleIncomingInlineQuery(update.getInlineQuery());
         }
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            if (message.getText().equals("/help") || message.getText().equals("/help@" + getBotUsername())) {
-                if (message.isSuperGroupMessage()) {
 
-                    markup(update, "Это меню помощи");
-                } else {
-                    sendMsgToPrivate(update, "sad");
-
+        if (!update.hasInlineQuery() && !update.hasCallbackQuery()) {
+            if (pinned_message_processing) {
+                if (pinned.getMessageId() == 0) {
+                    if (!databaseConnector.pinExists(update.getMessage().getText())) {
+                        savePin(update);
+                    } else {
+                        databaseConnector.deletePin(update.getMessage().getText(), update.getMessage().getFrom().getUserName());
+                        sendMsgToPrivate(update, "Удалено!");
+                        pinned_message_processing = false;
+                    }
                 }
             }
+            if (create_account_processing) {
+                if (user.getAuthorName() != null) {
+                    createAccount(update);
+                } else if (user.getAuthorName() == null) {
+                    user.setUserName(update.getMessage().getFrom().getUserName());
+                    if (!databaseConnector.ifUserExists(saveText(update.getMessage().getText(), user.getUserName()))) {
+                        user.setAuthorName(saveText(update.getMessage().getText(), user.getUserName()));
+                    } else {
+                        sendMsgToPrivate(update, "Уже существует. К сожалению, необходимо выбрать другое имя.");
+                    }
+                    createAccount(update);
+                }
+            }
+        }
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            if (message.getText().equals("/help") || message.getText().equals("/help@" + getBotUsername())) {
+                markup(update, CONSTANT_HELP);}
             if ((message.getText()).equals("/start " + utilities.regex(message.getText()))) {
+                if (!databaseConnector.ifUserExists(update.getMessage().getFrom().getId())) {
+                    markup(update, "Поздравляю! Вы подключены к пользователю " + databaseConnector.getParamByUserId(Integer.parseInt(utilities.
+                            regex(message.getText())), "userName").toString() + "\n\n" + "K сожалению, наш бот может работать только если у " +
+                            "вас заполнено поле username в Telegram. Сейчас ваш юзернейм " + update.getMessage().getFrom().getUserName() +
+                            "'\n\nЕсли он 'null', пожалуйста, задайте его в настройках прямо сейчас!");
 
-                markup(update, "Поздравляю! Вы подключены к пользователю " + databaseConnector.getParamByUserId(Integer.parseInt(utilities.
-                        regex(message.getText())), "userName").toString() +"\n\n" + "K сожалению, наш бот может работать только если у " +
-                        "вас заполнено поле username в Telegram. Сейчас ваш юзернейм "+ update.getMessage().getFrom().getUserName()+
-                        "'\n\nЕсли он 'null', пожалуйста, задайте его в настройках прямо сейчас!");
-                sub_markup(update);
-                subber(update, Integer.parseInt(utilities.regex(message.getText())));
+                    sub_markup(update);
+                    subber(update, Integer.parseInt(utilities.regex(message.getText())));
+                    info(update);
+                }
             }
             if (message.getText().equals("/start")) {
-                markup(update, "Привет! Если вы не преподаватель, попросите его о уникальной ссылке. \n" +
-                        "Для того, чтобы начать пользоваться ботом, пожалуйста, настройте максимально свой аккаунт!"+"\n\n" + "K сожалению, наш бот " +
-                        "может работать только если у вас заполнено поле username в Telegram. Сейчас ваш юзернейм = '"+ update.getMessage()
-                        .getFrom().getUserName()+ "'\n\nЕсли он 'null', пожалуйста, задайте его в настройках прямо сейчас!");
+                if (!databaseConnector.ifUserExists(update.getMessage().getFrom().getId())) {
+
+                    markup(update, "Привет! Если вы не преподаватель, попросите его о уникальной ссылке. \n" +
+                            "Для того, чтобы начать пользоваться ботом, пожалуйста, настройте максимально свой аккаунт!" + "\n\n" + "K сожалению, наш бот " +
+                            "может работать только если у вас заполнено поле username в Telegram. Сейчас ваш юзернейм = '" + update.getMessage()
+                            .getFrom().getUserName() + "'\n\nЕсли он 'null', пожалуйста, задайте его в настройках прямо сейчас!");
+                }
             }
             if (message.getText().equals("Сохраненные сообщения")) {
-
                 pinned(update);
             }
-
-
             if (message.getText().equals("Домашние задания")) {
                 homeTask(update);
             }
@@ -117,25 +126,30 @@ public class TelegramBot extends TelegramLongPollingBot {
                 accountSettings(update);
             }
 
-        } else if (update.hasCallbackQuery()) {
+        }
+        if (update.hasCallbackQuery()) {
             String call_data = update.getCallbackQuery().getData();
 
-            if (call_data.equals("all_pinned")) {
-                EditMessageText new_message = new EditMessageText()
-                        .setChatId(update.getCallbackQuery().getMessage().getChatId())
-                        .setMessageId(update.getCallbackQuery().getMessage().getMessageId())
-                        .setText("Нажмите на кнопку, чтобы получить нужное сообщение. \n " +
-                                "Тут будут текстом сообщения с нумерацией и началом сообщения(100 символов) и просьбой отправить нужный номер.");
-                try {
-                    editMessageText(new_message);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (call_data.equals("create_pinned")) {
+            if (call_data.equals("worked_pinned")) {
                 if (pinned.getMessageId() == 0) {
                     pinned_message_processing = true;
-                    sendMsgToPrivate(update, "Перешлите мне сообщение");
+                    EditMessageText editMessageText = new EditMessageText();
+                    editMessageText.setChatId(update.getCallbackQuery().getMessage().getChatId())
+                            .setMessageId(update.getCallbackQuery().getMessage().getMessageId())
+                            .setText("Перешлите мне сообщение\n\nА также, вы можете удалять их");
+                    editMessageText.setChatId(String.valueOf(update.getCallbackQuery().getFrom().getId()));
+                    InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+                    List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+                    List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                    rowInline.add(new InlineKeyboardButton().setText("Удалить сообщене").setSwitchInlineQueryCurrentChat("pm"));
+                    rowsInline.add(rowInline);
+                    markupInline.setKeyboard(rowsInline);
+                    editMessageText.setReplyMarkup(markupInline);
+                    try {
+                        execute(editMessageText);
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
@@ -146,19 +160,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 graph.setUrl(utilities.authorization(user.getToken()));
                 graph.setText("YourURL");
                 try {
-                    answerCallbackQuery(graph);
+                    execute(graph);
                 } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (call_data.equals("all_ht")) {
-                user = databaseConnector.getUserByUserName(update.getCallbackQuery().getFrom().getUserName());
-                PageList pageList = null;
-                try {
-                    pageList = new GetPageList(user.getToken())
-                            .setLimit(10)
-                            .execute();
-                } catch (TelegraphException e) {
                     e.printStackTrace();
                 }
             }
@@ -185,13 +188,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 new_message.setReplyMarkup(markupInline);
 
                 try {
-                    editMessageText(new_message);
+                    execute(new_message);
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                 }
             }
             if (call_data.equals("authorization")) {
-                System.out.println(user);
+
                 User root = databaseConnector.getUserByUserName(update.getCallbackQuery().getFrom().getUserName());
                 AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
                 answerCallbackQuery.setUrl(utilities.authorization((String) databaseConnector.getParamByUserName(root.getUserName(), "token")));
@@ -199,40 +202,51 @@ public class TelegramBot extends TelegramLongPollingBot {
                 answerCallbackQuery.setText("sa");
 
                 try {
-                    answerCallbackQuery(answerCallbackQuery);
+                    execute(answerCallbackQuery);
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                 }
                 accountSettings(update);
             }
-
         }
     }
 
     private void info(Update update) {
-        user = databaseConnector.getUserByUserName(update.getMessage().getFrom().getUserName());
-        SendMessage sendMessage = new SendMessage();
-        if (user.getisAdmin()) {
-            if ((utilities.getInfo(user.getUserName())).isEmpty()) {
-                sendMessage.setText("К сожалению, ваши ученики пока не присоединились к боту");
+        if (databaseConnector.ifUserExists(update.getMessage().getFrom().getId())) {
+            user = databaseConnector.getUserByUserName(update.getMessage().getFrom().getUserName());
+
+            SendMessage sendMessage = new SendMessage();
+            if (user.getisAdmin()) {
+                if ((databaseConnector.getInfo(user.getUserName())).isEmpty()) {
+                    sendMessage.setText("К сожалению, ваши ученики пока не присоединились к боту");
+                } else {
+                    sendMessage.setText("Ваши ученики, что подключились к боту: \n" + databaseConnector.getInfo(user.getUserName()));
+                }
+                sendMessage.setChatId(String.valueOf(user.getUserId())).enableHtml(true);
+                InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+                List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+                List<InlineKeyboardButton> refUrl = new ArrayList<>();
+                refUrl.add(new InlineKeyboardButton().setText("Отправить реферальную ссылку").setSwitchInlineQuery("rf"));
+                rowsInline.add(refUrl);
+                markupInline.setKeyboard(rowsInline);
+                sendMessage.setReplyMarkup(markupInline);
+                try {
+                    execute(sendMessage);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
             } else {
-                sendMessage.setText("Ваши ученики, что подключились к боту: \n" + utilities.getInfo(user.getUserName()));
-            }
-            sendMessage.setChatId(String.valueOf(user.getUserId())).enableHtml(true);
-            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-            List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-            List<InlineKeyboardButton> refUrl = new ArrayList<>();
-            refUrl.add(new InlineKeyboardButton().setText("Отправить реферальную ссылку").setSwitchInlineQuery("rf"));
-            rowsInline.add(refUrl);
-            markupInline.setKeyboard(rowsInline);
-            sendMessage.setReplyMarkup(markupInline);
-            try {
-                sendMessage(sendMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
+                SendMessage sendMessage1 = new SendMessage().setChatId(String.valueOf(user.getUserId())).enableHtml(true);
+                sendMessage1.setText(CONSTANT_INFO);
+                try {
+                    execute(sendMessage1);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+
             }
         } else {
-            //сюда
+            sendMsgToPrivate(update, "Для начала создайте аккаунт!");
         }
     }
 
@@ -242,37 +256,51 @@ public class TelegramBot extends TelegramLongPollingBot {
         pinned.setUserName(update.getMessage().getFrom().getUserName());
         pinned.setMessageId(update.getMessage().getMessageId());
         pinned.setTextMessage(update.getMessage().getText());
-        try {
-            pinned.setForwardFrom(update.getMessage().getForwardFromChat().getTitle());
-        } catch (Exception e) {
-            pinned.setForwardFrom(update.getMessage().getForwardFrom().getUserName() + " (" + update.getMessage().getForwardFrom().getFirstName() + " " + update.getMessage().getForwardFrom().getLastName() + ")");
+        if (update.hasMessage()) {
+            if (update.getMessage().getForwardFromChat() != null) {
+                pinned.setForwardFrom(update.getMessage().getForwardFromChat().getTitle());
+            }
+            if (update.getMessage().getForwardFrom() != null) {
+                pinned.setForwardFrom(update.getMessage().getForwardFrom().getUserName() + " (" + update.getMessage().getForwardFrom().getFirstName() + " " + update.getMessage().getForwardFrom().getLastName() + ")");
+            }
+            databaseConnector.insert(pinned);
+            pinned.reset();
+            sendMsgToPrivate(update, "Готово, теперь вы можете его получить из всех закрепленных.");
         }
+    }
 
-        databaseConnector.insert(pinned);
 
-        sendMsgToPrivate(update, "Готово, теперь вы можете его получить из всех закрепленных.");
-        pinned.reset();
+    private String saveText(String text, String userName) {
+        String root_text = null;
+        if (userName.equals(user.getUserName())) {
+            root_text = text;
+        }
+        assert root_text != null;
+        if (root_text.equals("Настройки аккаунта")) {
+            return null;
+        }
+        return root_text;
     }
 
     private void handleIncomingInlineQuery(InlineQuery inlineQuery) {
         String query = inlineQuery.getQuery().trim().toLowerCase();
         if (query.equals("ht".trim().toLowerCase())) {
             try {
-                answerInlineQuery(utilities.converteResultsToResponse(inlineQuery, inlineQuery.getFrom().getUserName(), "ht"));
+                execute(utilities.converteResultsToResponse(inlineQuery, inlineQuery.getFrom().getUserName(), "ht"));
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
         }
         if (query.equals("pm".trim().toLowerCase())) {
             try {
-                answerInlineQuery(utilities.converteResultsToResponse(inlineQuery, inlineQuery.getFrom().getUserName(), "pm"));
+                execute(utilities.converteResultsToResponse(inlineQuery, inlineQuery.getFrom().getUserName(), "pm"));
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
         }
         if (query.equals("rf".trim().toLowerCase())) {
             try {
-                answerInlineQuery(utilities.converteResultsToResponse(inlineQuery, String.valueOf(inlineQuery.getFrom().getId()), "rf"));
+                execute(utilities.converteResultsToResponse(inlineQuery, String.valueOf(inlineQuery.getFrom().getId()), "rf"));
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
@@ -280,28 +308,36 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void homeTask(Update update) {
-        user = databaseConnector.getUserByUserName(update.getMessage().getFrom().getUserName());
-        SendMessage sendMessage = new SendMessage().setChatId(String.valueOf(user.getUserId()));
-        //оптимизировать
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-        if (user.getisAdmin()) {
-            rowInline.add(new InlineKeyboardButton().setText("Создать новое").setCallbackData("create_ht"));
-            rowInline.add(new InlineKeyboardButton().setText("Показать все Домашние задания").setCallbackData("all_ht"));
-            sendMessage.setText("Это меню управления домашними заданиями");
+        if (databaseConnector.ifUserExists(update.getMessage().getFrom().getId())) {
+            user = databaseConnector.getUserByUserName(update.getMessage().getFrom().getUserName());
+            SendMessage sendMessage = new SendMessage().setChatId(String.valueOf(user.getUserId()));
+            //оптимизировать
+            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+            List<InlineKeyboardButton> rowInline = new ArrayList<>();
+            List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
+            if (user.getisAdmin()) {
+                rowInline.add(new InlineKeyboardButton().setText("Новое").setCallbackData("create_ht"));
+                rowInline.add(new InlineKeyboardButton().setText("Отправить в чат").setSwitchInlineQuery("ht"));
+                sendMessage.setText("Это меню управления домашними заданиями\n\nТакже, вы можете использовать это как мероприятия или статьи.");
+
+            } else {
+                sendMessage.setText("Тут вы можете посмотреть все Ваши домашние задания");
+            }
+            rowsInline.add(rowInline);
+            rowInline2.add(new InlineKeyboardButton().setText("Показать Все").setSwitchInlineQueryCurrentChat("ht"));
+            rowsInline.add(rowInline2);
+            markupInline.setKeyboard(rowsInline);
+            sendMessage.setReplyMarkup(markupInline);
+            user.reset();
+            pinned.reset();
+            try {
+                execute(sendMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
         } else {
-            rowInline.add(new InlineKeyboardButton().setText("Показать все Домашние задания").setCallbackData("all_ht"));
-            sendMessage.setText("Тут вы можете посмотреть все Ваши домашние задания");
-        }
-        rowsInline.add(rowInline);
-        markupInline.setKeyboard(rowsInline);
-        sendMessage.setReplyMarkup(markupInline);
-        user.reset();
-        try {
-            sendMessage(sendMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
+            sendMsgToPrivate(update, "Пожалуйста, сначала создайте аккаунт");
         }
     }
 
@@ -320,7 +356,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         keyboardMarkup.setResizeKeyboard(true);
         message.setReplyMarkup(keyboardMarkup);
         try {
-            sendMessage(message);
+            execute(message);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
@@ -329,35 +365,44 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void subber(Update update, int userId) {
         user.setUserName(update.getMessage().getFrom().getUserName());
         user.setAuthorName(databaseConnector.getParamByUserId(Integer.parseInt(String.valueOf(userId)), "userName").toString());
+        user.setUserId(update.getMessage().getFrom().getId());
         user.setToken(String.valueOf(databaseConnector.getParamByUserId(userId, "token")));
         user.setisAdmin(false);
-        user.setUserId(update.getMessage().getFrom().getId());
+
         databaseConnector.insert(user);
         user.reset();
     }
 
     private void pinned(Update update) {
-        user = databaseConnector.getUserByUserName(update.getMessage().getFrom().getUserName());
-        SendMessage sendMessage = new SendMessage().setChatId(String.valueOf(user.getUserId()));
-        //оптимизировать
-        InlineKeyboardMarkup buttons = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> lines = new ArrayList<>();
-        List<InlineKeyboardButton> line = new ArrayList<>();
-        if (user.getisAdmin()) {
-            line.add(new InlineKeyboardButton().setText("Добавить новое").setCallbackData("create_pinned"));
-            sendMessage.setText("Это меню управления Закрепленными сообщениями");
+        if (databaseConnector.ifUserExists(update.getMessage().getFrom().getId())) {
+            user = databaseConnector.getUserByUserName(update.getMessage().getFrom().getUserName());
+            SendMessage sendMessage = new SendMessage().setChatId(String.valueOf(user.getUserId()));
+            //оптимизировать
+            InlineKeyboardMarkup buttons = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> lines = new ArrayList<>();
+            List<InlineKeyboardButton> line = new ArrayList<>();
+            List<InlineKeyboardButton> line2 = new ArrayList<>();
+
+            if (user.getisAdmin()) {
+                line.add(new InlineKeyboardButton().setText("Новое").setCallbackData("worked_pinned"));
+                line.add(new InlineKeyboardButton().setText("Отправить в чат").setSwitchInlineQuery("pm"));
+                sendMessage.setText("Это меню управления Закрепленными сообщениями");
+            } else {
+                sendMessage.setText("Тут вы можете посмотреть все Ваши закрепленные сообщения");
+            }
+            line2.add(new InlineKeyboardButton().setText("Показать все").setSwitchInlineQueryCurrentChat("pm"));
+            lines.add(line);
+            lines.add(line2);
+            buttons.setKeyboard(lines);
+            sendMessage.setReplyMarkup(buttons);
+            user.reset();
+            try {
+                execute(sendMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
         } else {
-            sendMessage.setText("Тут вы можете посмотреть все Ваши домашние задания");
-        }
-        line.add(new InlineKeyboardButton().setText("Все закрепленные").setCallbackData("all_pinned"));
-        lines.add(line);
-        buttons.setKeyboard(lines);
-        sendMessage.setReplyMarkup(buttons);
-        user.reset();
-        try {
-            sendMessage(sendMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
+            sendMsgToPrivate(update, "Пожалуйста, сначала создайте аккаунт");
         }
     }
 
@@ -370,7 +415,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             user.setUserId(update.getCallbackQuery().getFrom().getId());
         }
 
-        if (databaseConnector.exists(user.getUserId())) {
+        if (databaseConnector.ifUserExists(user.getUserId())) {
             SendMessage new_message = new SendMessage()
                     .setChatId(String.valueOf(databaseConnector.getParamByUserName(user.getUserName(), "userId")))
                     .setText("Вы вошли как " + user.getUserName() + ". Это меню настроек аккаунта");
@@ -378,24 +423,21 @@ public class TelegramBot extends TelegramLongPollingBot {
             List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
             List<InlineKeyboardButton> auth = new ArrayList<>();
             List<InlineKeyboardButton> profileLink = new ArrayList<>();
-            List<InlineKeyboardButton> createPage = new ArrayList<>();
             List<InlineKeyboardButton> singUp = new ArrayList<>();
             List<InlineKeyboardButton> info = new ArrayList<>();
             auth.add(new InlineKeyboardButton().setText("Edit Author Name").setCallbackData("low"));
             profileLink.add(new InlineKeyboardButton().setText("Edit Profile Link").setCallbackData("low"));
-            createPage.add(new InlineKeyboardButton().setText("Edit Account Name").setCallbackData("low"));
-            singUp.add(new InlineKeyboardButton().setText("Sing Up at this devise").setCallbackData("low"));
+            singUp.add(new InlineKeyboardButton().setText("Sing Up at this devise").setCallbackData("authorization"));
             info.add(new InlineKeyboardButton().setText("Добавить информацию о себе").setCallbackData("info"));
             rowsInline.add(auth);
             rowsInline.add(profileLink);
-            rowsInline.add(createPage);
             rowsInline.add(singUp);
             rowsInline.add(info);
             markupInline.setKeyboard(rowsInline);
             new_message.setReplyMarkup(markupInline);
             user.reset();
             try {
-                sendMessage(new_message);
+                execute(new_message);
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
@@ -403,18 +445,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             createAccount(update);
         }
 
-    }
-
-    private String saveText(Update update, String userName) {
-        String root_text = null;
-        if (userName.equals(user.getUserName())) {
-            root_text = update.getMessage().getText();
-        }
-        assert root_text != null;
-        if (root_text.equals("Настройки аккаунта")) {
-            return null;
-        }
-        return root_text;
     }
 
     private void createAccount(Update update) {
@@ -444,7 +474,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             message.setReplyMarkup(markupInline);
             create_account_processing = false;
             try {
-                sendMessage(message);
+                execute(message);
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
@@ -471,7 +501,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         keyboardMarkup.setKeyboard(keyboard);
         message.setReplyMarkup(keyboardMarkup);
         try {
-            sendMessage(message);
+            execute(message);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
@@ -489,7 +519,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 .setText(text)
                 .setChatId(String.valueOf((id)));
         try {
-            sendMessage(sendMessage);
+            execute(sendMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }

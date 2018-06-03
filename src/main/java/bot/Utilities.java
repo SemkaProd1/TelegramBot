@@ -1,7 +1,5 @@
 package bot;
 
-
-import com.sun.deploy.util.StringUtils;
 import database.DatabaseConnector;
 import database.Pinned;
 import org.json.JSONException;
@@ -16,11 +14,14 @@ import org.telegram.telegraph.api.objects.Page;
 import org.telegram.telegraph.api.objects.PageList;
 import org.telegram.telegraph.exceptions.TelegraphException;
 
-import java.io.*;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,6 +55,7 @@ public class Utilities {
         } else s = "/start";
         return s;
     }
+
 
     private String readAll(Reader rd) throws IOException {
         StringBuilder sb = new StringBuilder();
@@ -94,13 +96,13 @@ public class Utilities {
         List<InlineQueryResult> results = new ArrayList<>();
         InputTextMessageContent messageContent = new InputTextMessageContent();
         messageContent.enableWebPagePreview();
-        messageContent.setMessageText("Привет! Тут ты сможешь получать необходимую для обучения информацию: \n \n https://telegram.me/educationChat_bot?start="+id);
+        messageContent.setMessageText("https://t.me/educator_bot?start="+id+ "\n\nПривет! Тут ты сможешь получать необходимую для обучения информацию⬆️⬆️");
         InlineQueryResultArticle article = new InlineQueryResultArticle();
 
         article.setInputMessageContent(messageContent);
         article.setId(Integer.toString(1));
         article.setTitle("Отправить Реферальную Ссылку");
-        article.setThumbUrl("https://cdn.pbrd.co/images/HnywTrH.jpg");//ht
+        article.setThumbUrl("https://cdn.pbrd.co/images/HnVJEI6.png");//rf
 
         article.setDescription("Нажмите сюда, чтобы отправить вашу ссылку");
         results.add(article);
@@ -133,8 +135,7 @@ public class Utilities {
             article.setInputMessageContent(messageContent);
             article.setId(Integer.toString(i));
             article.setTitle(titles.get(i));
-            article.setThumbUrl("https://cdn.pbrd.co/images/HnywTrH.jpg");//ht
-
+            article.setThumbUrl("https://pasteboard.co/HnVJwgq.png");//ht
             article.setDescription(descriptions.get(i));
             results.add(article);
         }
@@ -165,7 +166,7 @@ public class Utilities {
             article.setInputMessageContent(messageContent);
             article.setId(Integer.toString(totalCount - 1));
             article.setTitle(titles.get(totalCount - 1));
-            article.setThumbUrl("https://cdn.pbrd.co/images/Hnyy2bO.jpg");//pm
+            article.setThumbUrl("https://cdn.pbrd.co/images/HnVJLKQ.png");//pm
             article.setDescription(descriptions.get(totalCount - 1));
             results.add(article);
         }
@@ -178,12 +179,5 @@ public class Utilities {
                 .execute();
     }
 
-    public String getInfo(String userName) {
-        List sa = databaseConnector.exists(userName);
-        List results = new LinkedList();
-        for (int i = 0; i < sa.size(); i++){
-            results.add("\uD83D\uDE0E <a href='tg://user?id=" + databaseConnector.getParamByUserName(String.valueOf(sa.get(i)),"userId") +"'>" + sa.get(i) + "</a> \n");
-        }
-        return StringUtils.join(results, "");
-    }
+
 }

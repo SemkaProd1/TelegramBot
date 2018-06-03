@@ -32,6 +32,10 @@ public class User {
     private
     int userId;
 
+    @Column
+    private
+    String info;
+
     public int getId() {
         return id;
     }
@@ -60,6 +64,10 @@ public class User {
         this.authorName = authorName;
     }
 
+    public String getInfo() {return info;}
+
+    public void setInfo(String info) {this.info = info;}
+
     public String getToken() {
         return token;
     }
@@ -76,12 +84,14 @@ public class User {
         isAdmin = admin;
     }
 
-    public User(int id, String userName, String authorName, String token, Boolean isAdmin) {
+    public User(int id, String userName, String authorName, String token, Boolean isAdmin,int userId, String info) {
         this.id = id;
         this.userName = userName;
         this.authorName = authorName;
         this.token = token;
         this.isAdmin = isAdmin;
+        this.info = info;
+        this.userId = userId;
     }
     public User(){
 
